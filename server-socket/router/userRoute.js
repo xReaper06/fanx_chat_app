@@ -1,8 +1,6 @@
 const express = require('express')
 const router = express.Router();
 const { createChatMessage,fetchChatMessages } = require('../controllers/chatController');
-
-  const userController = require('../controllers/userController')
   const TokenValidity = require('../middleware/tokenValidity')
 
   router.post('/chat/messages',TokenValidity.verifyToken, async (req, res) => {
@@ -28,10 +26,6 @@ const { createChatMessage,fetchChatMessages } = require('../controllers/chatCont
       res.status(500).json({ error: 'Internal Server Error' });
     }
   });
-
-
-  router.post('/register',userController.userRegistration);
-  router.post('/login',userController.login)
-
+  
   module.exports = router;
   

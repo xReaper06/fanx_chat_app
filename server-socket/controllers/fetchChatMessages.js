@@ -1,16 +1,16 @@
-const mysql = require('mysql2/promise');
-const dbConfig = require('./dbConfig'); // Import your database configuration
+const db = require('./config/dbConnection.js'); // Import your database configuration
 
 async function fetchChatMessages(roomId) {
+  let conn;
   try {
-    const connection = await mysql.createConnection(dbConfig);
-    const [rows] = await connection.execute(
+    conn = await db.getConnection()
+    const [rows] = await conn.execute(
       'SELECT * FROM chat_messages WHERE room_id = ? ORDER BY created_at ASC',
       [roomId]
     );
 
     // Close the database connection
-    await connection.end();
+    await conn.end();
 
     // Return the fetched chat messages
     return rows;

@@ -1,7 +1,6 @@
 const socketIo = require('socket.io');
-const mysql = require('mysql2/promise');
 const multer = require('multer');
-const dbConfig = require('./dbConfig'); // Import your database configuration
+const db = require('../config/dbConnection'); // Import your database configuration
 const fetchChatMessages = require('./fetchChatMessages'); // Import your chat message fetching function
 
 const initializeSocketIO = (server) => {
@@ -21,18 +20,19 @@ const initializeSocketIO = (server) => {
 
   io.on('connection', async (socket) => {
     console.log('A user connected to chat');
-
+    
     // Define the createChatMessage function
     const createChatMessage = async (roomId, senderId, message, filePath) => {
+      let conn;
       try {
-        const connection = await mysql.createConnection(dbConfig);
-        const [result] = await connection.execute(
+        conn = await db.getConnection();
+        const [result] = await conn.execute(
           'INSERT INTO chat_messages (room_id, sender_id, message, file_path) VALUES (?, ?, ?, ?)',
           [roomId, senderId, message, filePath]
         );
 
         // Close the database connection
-        await connection.end();
+        await conn.end();
 
         console.log(`Message saved to the database with ID: ${result.senderId}`);
         return result;

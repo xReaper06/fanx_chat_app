@@ -3,33 +3,41 @@ import { defineStore } from 'pinia';
 export const useAuthStore = defineStore('auth', {
   id:'auth',
   state: () => ({
-    token: null,
-    user: null,
-    isUserLoggedIn: false,
+    accessToken: localStorage.getItem('accessToken') || '',
+    refreshToken: localStorage.getItem('refreshToken') || '',
+    user: localStorage.getItem('user') || '',
   }),
   getters: {
-    isAuthenticated: (state) => !!state.token,
+    isAuthenticated: (state) => !!state.accessToken,
   },
   actions: {
-    async setToken(token) {
-      this.token = token
-      if(token){
-        this.isUserLoggedIn = true
-      }else{
-        this.isUserLoggedIn = false
-      }
+    setTokens( accessToken, refreshToken ) {
+      this.accessToken = accessToken;
+      this.refreshToken = refreshToken;
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
     },
-   async clearToken() {
-      this.token = null;
+    clearTokens() {
+      this.accessToken = '';
+      this.refreshToken = '';
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
     },
-    async setUser(user) {
+    updateAccessToken(accessToken){
+      this.accessToken = accessToken
+      localStorage.setItem('accessToken');
+    },
+    setUser(user) {
       this.user = user
     },
-    async setIsUserLoggedIn(isUserLoggedIn) {
-      this.isUserLoggedIn = isUserLoggedIn
+    updateLocalUser(user){
+      this.user = user
+      localStorage.setItem('user',JSON.stringify(user));
     },
     async logOut(){
-      this.clearToken();
+      this.clearTokens();
+      this.user = ''
+      localStorage.removeItem('user');
     },
     
   },
