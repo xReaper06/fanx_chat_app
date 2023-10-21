@@ -5,7 +5,7 @@ const multer = require('multer')
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-      cb(null, '../server/public/images'); // Adjust the destination folder as needed
+      cb(null, '../server-socket/public/images'); // Adjust the destination folder as needed
     },
     filename: function (req, file, cb) {
       cb(null,file.originalname);
