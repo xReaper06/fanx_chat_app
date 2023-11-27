@@ -6,6 +6,8 @@ export const useAuthStore = defineStore('auth', {
     accessToken: localStorage.getItem('accessToken') || '',
     refreshToken: localStorage.getItem('refreshToken') || '',
     user: localStorage.getItem('user') || '',
+    isConnected: false,
+    socketMessage: '',
   }),
   getters: {
     isAuthenticated: (state) => !!state.accessToken,
@@ -29,6 +31,7 @@ export const useAuthStore = defineStore('auth', {
     },
     setUser(user) {
       this.user = user
+      localStorage.setItem('user',JSON.stringify(user))
     },
     updateLocalUser(user){
       this.user = user
@@ -39,6 +42,14 @@ export const useAuthStore = defineStore('auth', {
       this.user = ''
       localStorage.removeItem('user');
     },
-    
-  },
+    setConnected() {
+      this.isConnected = true;
+    },
+    setDisconnected() {
+      this.isConnected = false;
+    },
+    setMessage(message) {
+      this.socketMessage = message;
+    }
+  }
 });

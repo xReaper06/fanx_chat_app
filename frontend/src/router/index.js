@@ -1,7 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import login from '../components/login.vue'
-import registration from '../components/registration.vue'
-import userDashboard from '../components/clientSide/dashboard.vue'
+import { useAuthStore } from '@/store'
+import login from '../components/userLogin.vue'
+import registration from '../components/userRegistration.vue'
+import userDashboard from '../components/clientSide/userDashboard.vue'
+import chatRooms from '../components/clientSide/chatRoom.vue'
 
 const routes = [
   {
@@ -18,6 +20,12 @@ const routes = [
     path:'/user/dashboard',
     name:'userDashboard',
     component: userDashboard,
+    meta: { requiresAuth: true }, 
+  },
+  {
+    path:'/user/chatRooms/:room_id',
+    name:'chatRooms',
+    component: chatRooms,
     meta: { requiresAuth: true }, 
   },
 

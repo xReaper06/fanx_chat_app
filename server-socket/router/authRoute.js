@@ -25,16 +25,14 @@ const storage = multer.diskStorage({
 
   const upload = multer({ storage: storage, fileFilter: fileFilter });
 
-const {
-    signUpValidation,
-    loginValidation,
-    idValidation,
-   } = require('../helpers/validator')
+
 const authController = require('../controllers/authController');
 
-authRouter.post('/userRegistration',upload.single('profilePicture'), signUpValidation, authController.userRegistration);
-authRouter.post('/login', loginValidation, authController.login);
+authRouter.post('/userRegistration',upload.fields([
+  {name:'profilePicture', maxCount:1},
+]), authController.userRegistration);
+authRouter.post('/login', authController.login);
 authRouter.post('/refresh-token', authController.Token);
-authRouter.post('/logout/:id', idValidation, authController.logout);
+authRouter.post('/logout',authController.logout);
 
 module.exports = authRouter;

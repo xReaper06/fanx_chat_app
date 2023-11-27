@@ -13,9 +13,8 @@ app.use(bodyParser.json());
 
 app.use(cors());
 
-app.use(express.static('public'));
 app.use('/api', authRoute);
-app.use('/api/images', express.static('public'));
+app.use('/api/images/', express.static('public'));
 
 app.use((err, req, res, next) => {
     err.statusCode = err.statusCode || 500;

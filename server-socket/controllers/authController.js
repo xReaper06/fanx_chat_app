@@ -1,6 +1,5 @@
 require('dotenv').config();
 
-const { validationResult } = require('express-validator')
 const bcrypt = require('bcrypt');
 const db = require('../config/dbConnection')
 const jwt = require('jsonwebtoken');
@@ -12,42 +11,39 @@ const userRegistration = async (req, res) => {
 
     try {
         conn = await db.getConnection();
-        const errors = validationResult(req);
-
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
+        
 
         // Check if the username is already in use
-        const existingUser = await conn.query(
+        const [existingUser] = await conn.query(
             `SELECT * FROM users WHERE LOWER(username) = LOWER(?);`,
             [req.body.username]
         );
-
-        if (existingUser.length > 0) {
-            return res.status(409).json({
+        console.log(existingUser.length)
+        if (existingUser.length) {
+            return res.status(401).json({
                 msg: 'This Username is already in Use!'
+            });
+        }else{
+            // Hash the password
+            const hashedPassword = await bcrypt.hash(req.body.password, 10);
+    
+            // Insert the new user into the database
+            const newUserResult = await conn.query(
+                `INSERT INTO users (profilepic,username, password, created) VALUES (?,?, ?, NOW());`,
+                [`images/${req.files.profilePicture[0].originalname}`,req.body.username, hashedPassword]
+            );
+    
+            // Insert the user's password into the savepasswords table
+            await conn.query(
+                `INSERT INTO savepasswords (user_id, last_password, created) VALUES (?, ?, NOW());`,
+                [newUserResult[0].insertId, req.body.password]
+            );
+    
+            return res.status(200).json({
+                msg: 'The user has been registered with us!'
             });
         }
 
-        // Hash the password
-        const hashedPassword = await bcrypt.hash(req.body.password, 10);
-
-        // Insert the new user into the database
-        const newUserResult = await conn.query(
-            `INSERT INTO users (profilepic,username, password, user_role, createdAt) VALUES (?,?, ?, 'user', NOW());`,
-            [`images/${req.files.profilePicture[0].originalname}`,req.body.username, hashedPassword]
-        );
-
-        // Insert the user's password into the savepasswords table
-        await conn.query(
-            `INSERT INTO savepasswords (user_id, last_password, date_created) VALUES (?, ?, NOW());`,
-            [newUserResult.insertId, req.body.password]
-        );
-
-        return res.status(200).json({
-            msg: 'The user has been registered with us!'
-        });
     } catch (error) {
         console.error(error);
         return res.status(500).json({
@@ -64,14 +60,9 @@ const login = async (req, res) => {
 
     try {
         conn = await db.getConnection();
-        const errors = validationResult(req);
-
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
 
         const [user] = await conn.query(
-            `SELECT id,profilepic, username, password, user_role FROM users WHERE username = ?`,
+        'SELECT id, profilepic, username, password FROM users WHERE username = ?;',
             [req.body.username]
         );
 
@@ -101,21 +92,15 @@ const login = async (req, res) => {
 
         // Generate a refresh token with a longer expiration time
         const refreshToken = jwt.sign(
-            { id: user[0].id, user_role: user[0].user_role },
+            { id: user[0].id },
             process.env.REFRESH_TOKEN,
             { expiresIn: '7d' }
         );
 
         // Store the refresh token in your database
         await conn.query(
-            `INSERT INTO tokens (user_id, refresh_token, flag) VALUES (?, ?, '1');`,
+            `INSERT INTO tokens (user_id, refresh_token) VALUES (?, ?);`,
             [user[0].id, refreshToken]
-        );
-
-        // Update last logged in time
-        await conn.query(
-            `UPDATE users SET lastloggedin = NOW() WHERE id = ?;`,
-            [user[0].id]
         );
 
         return res.status(200).json({
@@ -126,7 +111,6 @@ const login = async (req, res) => {
                 id: user[0].id,
                 profilepic:user[0].profilepic,
                 username: user[0].username,
-                user_role: user[0].user_role
             }
         });
     } catch (error) {
@@ -142,7 +126,7 @@ const login = async (req, res) => {
 };
 
 const generateAccessToken = (user)=>{
-    return jwt.sign({ id: user[0].id, user_role: user[0].user_role },process.env.ACCESS_TOKEN,{
+    return jwt.sign({ id: user[0].id },process.env.ACCESS_TOKEN,{
         expiresIn:'30m'
     })
 }
@@ -163,7 +147,6 @@ const Token = async (req, res) => {
         }
 
         const refreshToken = refreshTokenResult[0][0].refresh_token;
-        console.log(refreshToken);
         // Verify the refresh token
         const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN);
         const [user] = await conn.query(`SELECT * FROM users WHERE id = ?;`, [decoded.id]);
@@ -183,7 +166,6 @@ const Token = async (req, res) => {
                 id:user[0].id,
                 profilepic:user[0].profilepic,
                 username:user[0].username,
-                user_role:user[0].user_role,
             }
         });
 

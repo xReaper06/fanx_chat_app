@@ -8,7 +8,7 @@ var conn = mysql.createPool({
     password:DB_PASSWORD,
     database:DB_NAME,
     waitForConnections: true,
-    connectionLimit: 10, // Adjust this limit as needed
+    connectionLimit: 100, // Adjust this limit as needed
     queueLimit: 0,
 });
 

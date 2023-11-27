@@ -45,7 +45,6 @@ export default () => {
           // Update the access token in your Vue.js app and the Auth store
           const newAccessToken = refreshResponse.data.accessToken;
           const newUserResult = refreshResponse.data.user;
-          localStorage.setItem('key', newAccessToken);
           authStore.updateLocalUser(newUserResult);
           authStore.updateAccessToken(newAccessToken); // Assuming you have a mutation to update the token
   
