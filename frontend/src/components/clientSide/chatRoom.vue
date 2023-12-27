@@ -1,10 +1,8 @@
 <template>
-  <div class="container mt-5">
+  <div class="container">
     <div class="d-flex justify-content-between">
-    <div class="card">
-      <div class="user-disconnected-message" id="user-disconnected">
-    </div>
-      <div class="card-header bg-primary text-white">
+    <div class="card custom-card">
+      <div class="card-header bg-light text-black">
         {{ room.room_name }}
         <button class="btn btn-secondary" @click="Exit">exit</button>
         <div id="user-joined">
@@ -14,11 +12,11 @@
        
       </div>
       <div class="input-group">
-        <input v-model="newMessage" @keydown.enter.prevent="sendMessage" class="form-control" placeholder="Type your message" />
-        <button @click="sendMessage" class="btn btn-primary">Send</button>
+        <input v-model="newMessage" @keydown.enter.prevent="sendMessage" class="form-control bg-light text-dark" placeholder="Type your message" />
+        <button @click="sendMessage" type="button" class="btn btn-dark">Send</button>
       </div>
     </div>
-    <div class="joined-users-list" style="width: 200px;">
+    <div class="joined-users-list bg-secondary" style="width: 200px;">
         <h5>Users Joined</h5>
         <ul>
           <li v-for="user in joinedUsers" :key="user.id">
@@ -83,8 +81,11 @@ const getRoomConvo = async () => {
       conversation.forEach(data => {
         if (data.users_id == username.value.id) {
           // Append the message for the current user
-          li.innerHTML += `
-                  <p class="text-end me-3 custom-text-box p-3 border">${data.message}</p>
+          li.innerHTML += `<div class="">
+  <div class="ms-auto p-3 d-flex flex-row-reverse align-items-end mt-2 p-auto w-50 border bg-primary text-light text-end h-auto">
+    <p class="w-100 overflow-wrap-break-word">${data.message}</p>
+  </div>
+</div>
                 `;
         } else {
           // Append the message for other users
@@ -99,7 +100,7 @@ const getRoomConvo = async () => {
                     />
                     <strong>${data.username}</strong>
                   </div>
-                  <p class="text-start mt-2 ms-3 custom-text-box p-3 border">${data.message}</p>
+                  <p class="text-start mt-2 ms-3 w-50 custom-text-box h-auto p-auto other-message bg-light p-3 border">${data.message}</p>
               `;
         }
       
@@ -124,11 +125,15 @@ const appendMessage = (data)=>{
       ul.classList.add('list-unstyled')
       const li = document.createElement('li')
       li.classList.add('messages')
-
+      if(data!=null){
         if (data.users_id == username.value.id) {
           // Append the message for the current user
-          li.innerHTML = `
-                  <p class="text-end me-3 custom-text-box p-3 border">${data.message}</p>
+          li.innerHTML = `<div class="">
+  <div class="ms-auto p-3 d-flex flex-row-reverse align-items-end mt-2 p-auto w-50 bg-primary border text-light text-end h-auto">
+    <p class="w-100 overflow-wrap-break-word">${data.message}</p>
+  </div>
+</div>
+
                 `;
         } else {
           // Append the message for other users
@@ -143,9 +148,11 @@ const appendMessage = (data)=>{
                     />
                     <strong>${data.username}</strong>
                     </div>
-                    <p class="text-start mt-2 ms-3 custom-text-box p-3 border">${data.message}</p>
+                    <p class="text-start mt-2 ms-3 w-50 me-auto h-auto p-auto custom-text-box bg-light other-message p-3 border">${data.message}</p>
               `;
         }
+      }
+
       ul.appendChild(li)
       div.appendChild(ul)
       chatMessageBox.appendChild(div)
@@ -156,12 +163,31 @@ const appendMessage = (data)=>{
 }
 
 const handleUserDisconnected = (data) => {
-  const userDisconnected = document.querySelector('#user-disconnected');
-  userDisconnected.innerHTML = `
-    <p class="text-center">${data.username} has left the room</p>
-  `;
-};
+  alert('You leave the Room');
+  const chatMessageBox = document.querySelector('#chat-message');
+  const div = document.createElement('div')
+      div.classList.add('message')
+      const ul = document.createElement('ul')
+      ul.classList.add('list-unstyled')
+      const li = document.createElement('li')
+      li.classList.add('messages')
 
+  if (li) {
+      li.innerHTML = `
+        <p class="text-center">${data.username} has left the room</p>
+      `;
+  } else {
+    console.error("Element with ID 'user-disconnected' not found in the document.");
+  }
+
+      ul.appendChild(li)
+      div.appendChild(ul)
+      chatMessageBox.appendChild(div)
+      // Set the innerHTML after the loop is complete
+      if (chatMessageBox) {
+      chatMessageBox.scrollTop = chatMessageBox.scrollHeight;
+      }
+};
 
 const getMyRoom = async()=>{
   try {
@@ -185,11 +211,25 @@ onMounted(async () => {
     await getRoomConvo();
     await getMyRoom();
     
-    
+    // Attach a handler to the beforeunload event
+    window.addEventListener('beforeunload', handleBeforeUnload);
   } catch (error) {
     console.error('Socket.IO connection error:', error);
   }
+
 });
+
+const handleBeforeUnload = () => {
+  const formData = {
+    room_id: room_id.value,
+    users_id: username.value.id,
+    username: username.value.username,
+  };
+
+  // Emit disconnection event when the user is leaving the page
+  socket.emit('disconnection', formData);
+};
+
 watchEffect(()=>{
 
   socket.on('connect', () => {
@@ -206,17 +246,30 @@ watchEffect(()=>{
     
     socket.on('user-joined', (data) => {
       console.log('User joined:', data);
-      const userJoined = document.querySelector('#user-joined')
+      const chatMessageBox = document.querySelector('#chat-message');
+      const div = document.createElement('div')
+      div.classList.add('message')
+      const ul = document.createElement('ul')
+      ul.classList.add('list-unstyled')
+      const li = document.createElement('li')
+      li.classList.add('messages')
       handleUserJoined(data);
         if(data.users_id == username.value.id){
-          userJoined.innerHTML =`
+          li.innerHTML =`
                 <p class="text-center">You Join the Room</p>
            `
         }else{
-          userJoined.innerHTML = `
+          li.innerHTML = `
                 <p class="text-center">${data.username} has Joined the Room</p>
             `
         }
+        ul.appendChild(li)
+      div.appendChild(ul)
+      chatMessageBox.appendChild(div)
+      // Set the innerHTML after the loop is complete
+      if (chatMessageBox) {
+      chatMessageBox.scrollTop = chatMessageBox.scrollHeight;
+      }
     });
 
   socket.on('chat-message', (data) => {
@@ -236,13 +289,17 @@ watchEffect(()=>{
 console.log(chatMessages.value)
 
 const sendMessage = async()=>{
-  const data = {
-    room_id:room_id.value,
-    users_id:parseInt(username.value.id),
-    message:newMessage.value
+  if(newMessage.value === ''){
+    alert('do not send empty message')
+  }else{
+    const data = {
+      room_id:room_id.value,
+      users_id:parseInt(username.value.id),
+      message:newMessage.value
+    }
+    socket.emit('send-message',data)
+    newMessage.value = ''
   }
-  socket.emit('send-message',data)
-  newMessage.value = ''
 }
 const Exit = ()=>{
   const formData = {
@@ -264,29 +321,57 @@ const Exit = ()=>{
   border: 1px solid #dee2e6;
   border-radius: 5px;
 }
+
+.my-message {
+  background-color: #007bff;
+  color: #fff;
+  border-radius: 10px;
+  padding: 10px;
+  width: 50%;
+  margin-left: auto; /* Move the message to the end of the container */
+  margin-right: 0;
+  margin-bottom: 10px;
+  text-align: end; /* Align text to the end */
+}
+.custom-card {
+  width: 700px;
+}
+.overflow-wrap-break-word {
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+.container{
+  transform: translate(0%,10%);
+}
+
 .card {
-  max-width: 600px;
+  max-width: 1000px;
   margin: auto;
 }
 
 .chat-messages {
   max-height: 300px;
   overflow-y: scroll;
+  background-color: rgba(00, 00, 00, 0.7);
 }
 
 .message {
   margin: 5px 0;
 }
-.messages{
+
+.messages {
   text-align: start;
+  text-shadow: 1px #007bff;
 }
 
 .input-group {
-  margin-top: 10px;
+  background-color: rgba(00, 00, 00, 0.7);
 }
+
 .user-disconnected-message {
   text-align: center;
   color: red;
   margin-top: 10px;
 }
 </style>
+

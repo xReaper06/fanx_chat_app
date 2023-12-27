@@ -40,34 +40,69 @@ async function storeRoom(req,res) {
     try {
         let room_id = generateRoomID();
         conn = await db.getConnection();
+        const {id} = req.user;
+        let resu;
         let response;
         const [result] = await conn.query('SELECT * FROM rooms WHERE room_id =?',[room_id]);
-        if(result){
+        if(result.length>0){
             room_id = generateRoomID();
-            response = await conn.query(
+            [response] = await conn.query('SELECT room_name FROM rooms WHERE room_name = ?',[req.body.room_name]);
+            if(response.length > 0 && response[0].room_name === req.body.room_name){
+                console.log(response);
+                return res.status(404).json({
+                    msg:'RoomName is already Created'
+                })
+            }
+            resu = await conn.query(
                 'INSERT INTO rooms(room_id, users_id, room_name, status, created) VALUES(?,?,?,"New",now())',
-                [room_id, req.body.users_id, req.body.room_name]
+                [room_id, id, req.body.room_name]
             );
-        }else{
-
-            response = await conn.query(
-                'INSERT INTO rooms(room_id, users_id, room_name, status, created) VALUES(?,?,?,"New",now())',
-                [room_id, req.body.users_id, req.body.room_name]
-            );
-        }
-        await conn.query('INSERT INTO myrooms(room_id, users_id, room_name) VALUES(?,?,?)',
-        [room_id, req.body.users_id, req.body.room_name])
-        if (response) {
+            if (!resu) {
+                return res.status(404).json({
+                    msg:'Room Failed to Create',
+                })
+            }
+            await conn.query('INSERT INTO myrooms(room_id, users_id, room_name) VALUES(?,?,?)',
+            [room_id, id, req.body.room_name])
             return res.status(200).json({
                 msg:'Room Created',
                 room:{
-                    id:response[0].insertId,
+                    id:resu[0].insertId,
                     room_id:room_id,
-                    users_id:req.body.users_id,
+                    users_id:id,
                     room_name:req.body.room_name
                 }
             })
+        }else{
+           [response] = await conn.query('SELECT room_name FROM rooms WHERE room_name = ?',[req.body.room_name]);
+            if(response.length > 0 && response[0].room_name === req.body.room_name){
+                console.log(response[0].room_name === req.body.room_name);
+                return res.status(404).json({
+                    msg:'RoomName is already Created'
+                });  
+            }
+            resu = await conn.query(
+                'INSERT INTO rooms(room_id, users_id, room_name, status, created) VALUES(?,?,?,"New",now())',
+                [room_id, id, req.body.room_name]
+            );
+            if (!resu) {
+                return res.status(404).json({
+                    msg:'Room Failed to Create',
+                })
+            }
+            await conn.query('INSERT INTO myrooms(room_id, users_id, room_name) VALUES(?,?,?)',
+            [room_id, id, req.body.room_name])
+            return res.status(200).json({
+                msg:'Room Created',
+                room:{
+                    id:resu[0].insertId,
+                    room_id:room_id,
+                    users_id:id,
+                    room_name:req.body.room_name
+                }
+            })     
         }
+        
     } catch (error) {
         console.log(error);
         return res.status(500).json({

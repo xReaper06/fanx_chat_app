@@ -48,13 +48,13 @@ io.on('connection', async(socket) => {
     conn = await db.getConnection();
     socket.on('join-room',async(data)=>{
         socket.join(data.room_id);
-        const [joinedroom] = await conn.query('SELECT * FROM joinedroom WHERE users_id =? ',[data.users_id]);
+        const [joinedroom] = await conn.query('SELECT * FROM joinedroom WHERE users_id =? AND room_id = ?',[data.users_id,data.room_id]);
         if(joinedroom.length<1){
             await conn.query('INSERT INTO joinedroom(users_id,room_id)VALUES(?,?)',[data.users_id,parseInt(data.room_id)])
             const [myrooms] = await conn.query('SELECT * FROM rooms WHERE room_id =?',[data.room_id]);
             console.log(`You joined room: ${data.room_id}`);
             const [users] = await conn.query('SELECT id,username FROM users WHERE id =? ',[data.users_id]);
-        const [joinedrooms] = await conn.query('SELECT joinedroom.users_id,joinedroom.room_id,users.id,users.username FROM joinedroom LEFT JOIN users ON joinedroom.users_id = users.id');
+        const [joinedrooms] = await conn.query('SELECT joinedroom.users_id,joinedroom.room_id,users.id,users.username FROM joinedroom LEFT JOIN users ON joinedroom.users_id = users.id WHERE joinedroom.room_id = ?',[data.room_id]);
             const formdata = {
                 users_id:users[0].id,
                 username:users[0].username,
@@ -70,7 +70,7 @@ io.on('connection', async(socket) => {
         }else{
             const [myrooms] = await conn.query('SELECT * FROM rooms WHERE room_id =?',[data.room_id]);
             console.log(`You joined room: ${data.room_id}`);
-            const [joinedrooms] = await conn.query('SELECT joinedroom.users_id,joinedroom.room_id,users.id,users.username FROM joinedroom LEFT JOIN users ON joinedroom.users_id = users.id',);
+            const [joinedrooms] = await conn.query('SELECT joinedroom.users_id,joinedroom.room_id,users.id,users.username FROM joinedroom LEFT JOIN users ON joinedroom.users_id = users.id WHERE joinedroom.room_id =?',[data.room_id]);
             const [users] = await conn.query('SELECT id,username FROM users WHERE id =? ',[data.users_id]);
             const formdata = {
                 users_id:users[0].id,

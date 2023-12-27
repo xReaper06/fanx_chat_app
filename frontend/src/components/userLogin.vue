@@ -1,20 +1,81 @@
 <template>
-  <div>
+  <div class="login-container">
     <h1>Login Form</h1>
-    <form @submit.prevent="login">
-      <div class="mb-3">
+    <form @submit.prevent="login" class="login-form">
+      <div class="form-group">
         <label for="username" class="form-label">Username</label>
-        <input v-model="formData.username" type="username" id="username" class="form-control" required>
+        <input v-model="formData.username" type="text" id="username" class="form-control" required>
       </div>
-      <div class="mb-3">
+      <div class="form-group">
         <label for="password" class="form-label">Password</label>
         <input v-model="formData.password" type="password" id="password" class="form-control" required>
       </div>
       <button type="submit" class="btn btn-primary">Login</button>
     </form>
-    <a href="/registration">Register</a>
+    <div class="additional-options">
+      <a href="/forgot-password">Forgot Password?</a>
+      <span class="separator">|</span>
+      <a href="/registration">Register</a>
+    </div>
   </div>
 </template>
+
+<style scoped>
+  .login-container {
+    max-width: 400px;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    transform: translate(0%,40%);
+  }
+
+  .login-form {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .form-group {
+    margin-bottom: 15px;
+  }
+
+  .form-label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    display: block;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 8px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+
+  .btn-primary {
+    background-color: #007bff;
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .btn-primary:hover {
+    background-color: #0056b3;
+  }
+
+  .additional-options {
+    margin-top: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .separator {
+    margin: 0 10px;
+  }
+</style>
 
 <script>
 import AuthenticationServices from '@/services/AuthenticationServices.js';
@@ -54,7 +115,3 @@ export default {
   }
 }
 </script>
-
-<style lang="scss" scoped>
-
-</style>
